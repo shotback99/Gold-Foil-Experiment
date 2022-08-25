@@ -3,6 +3,7 @@ from pyautogui import size
 from sys import exit
 from random import randint, uniform, choice
 from math import sqrt, ceil, cos, sin, radians, pi
+import matplotlib.pyplot as plt
 
 from alphaparticle import AlphaParticle
 from atom import Atom
@@ -14,6 +15,8 @@ pygame.display.set_caption("Gold Foil Experiment")
 make it more accurate
 collect data
 represent data
+
+add main menu
 """
 
 class Game:
@@ -28,6 +31,7 @@ class Game:
         pygame.time.set_timer(pygame.USEREVENT, 100)
         self.general_config = [1]
         self.general_electrons = []
+        self.plot_alpha_pos = []
 
     def run(self):
         while True:
@@ -40,9 +44,12 @@ class Game:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_r:
                         self.atoms = []
+                        self.plot_alpha_pos = []
                         self.general_config = [1]
                         self.toggle_ui = 0
                         self.general_electrons = []
+                    if event.key == pygame.K_m:
+                        self.display_data()
                     if event.key == pygame.K_SPACE:
                         self.toggle_ui += 1
                         self.toggle_ui %= 4 # resets to 0 at 4
@@ -99,12 +106,16 @@ class Game:
                 alpha.draw(self.screen)
                 for electron in self.general_electrons:
                     if electron.position[1] < 0 - electron.size or electron.position[1] > self.size[1] + electron.size: self.general_electrons.remove(electron)
-
             pygame.display.update()
             self.clock.tick(60)
-            for alpha in self.alpha:
-                if alpha.position[1] < 0-alpha.size or alpha.position[1] > self.size[1] + alpha.size: self.alpha.remove(alpha)
+            for alpha in self.alpha: # alpha doesn't draw properly if not here
+                self.last_alpha_pos(alpha)
 
+    def last_alpha_pos(self, alpha):
+        if -alpha.size > alpha.position[1] or alpha.position[1] > self.size[1]+alpha.size or -alpha.size > alpha.position[0] or alpha.position[0] > self.size[0]+alpha.size:
+            pos = (alpha.position[0], alpha.position[1])
+            self.plot_alpha_pos.append(pos)
+            self.alpha.remove(alpha)
     def draw_atoms(self):
         if self.toggle_ui > 0:
             for atom in self.atoms: # displays bounds
@@ -121,10 +132,35 @@ class Game:
             ran_x = randint(0, self.size[0])
             alpha = AlphaParticle((ran_x, self.size[1]))
             self.alpha.append(alpha)
-    def display_data(self):
-        pass
+    def display_data(self):# add some more use full stats
+        """
+        number of atoms:electrons:alpha particles
+        where each alpha particle went
+        most common direction with colour graph
+        """
+        offset = 50
+        x = [i[0] for i in self.plot_alpha_pos]
+        y = [i[1] for i in self.plot_alpha_pos]
+
+        #f, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
+        pygame.time.set_timer(pygame.USEREVENT, 0)
+
+        plt.subplot(1, 2, 1)
+        plt.xlim([-offset, self.size[0]+offset])
+        plt.ylim(-offset, self.size[1]+offset)
+        scatter = plt.scatter(x, y, c = [(1, 0, 0)], alpha = 0.1)
+        scatter.axes.invert_yaxis()
+        plt.title("direction alpha particles went")
 
 
+        plt.subplot(1, 2, 2)
+        langs = ["atoms", "alpha particles"]
+        plt.bar(langs, [len(self.atoms), len(self.alpha)])
+        plt.title("amount")
+
+        plt.show()
+        pygame.time.set_timer(pygame.USEREVENT, 100)
+        plt.close("all")
 
 # polar catesian conversian
 #To convert from Polar Coordinates (r,θ) to Cartesian Coordinates (x,y) : x = r × cos( θ ) y = r × sin( θ )
