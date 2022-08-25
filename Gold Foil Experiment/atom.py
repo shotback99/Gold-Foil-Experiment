@@ -16,6 +16,9 @@ class Atom:
         self.shells = len(self.electron_config)
         self.turn = choice([-1, 1])
         self.create_electrons()
+    def draw(self, screen):
+        pygame.draw.circle(screen, self.colour, self.position, self.size)    
+
     def check_bounds(self, alpha_list):
         if len(alpha_list) == 0: return []
         for alpha in alpha_list:
